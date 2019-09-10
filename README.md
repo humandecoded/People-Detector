@@ -1,10 +1,10 @@
 # People-Detector
 High level python script that looks at a folder of video files and tells you which files contain people. 
 
-Requirements and getting started:
+**Requirements and getting started:
 
 This script relies on the work done on cvlib: https://github.com/arunponnusamy/cvlib/commits?author=arunponnusamy
-cvlib offers us some high level methods to detect common objects within photos or video. 
+cvlib offers us some high level methods to detect common objects within photos or video without any experience with machine learning.
 
 To get started (recommend creating a virtual environment):
 - pip install opencv-python
@@ -14,7 +14,7 @@ When you first run this script it will reach out and download the pre-trained YO
 
 After that it's as simple as:
 python people-detector.py -d <path to folder with video files>
-The script will use tensorflow to analyze your files for people. It will right the results to a .txt file in your 
+The script will use tensorflow to analyze your files for people. It will write the results to a .txt file in your 
 current folder. A blank text file means no humans were found.
   
   
