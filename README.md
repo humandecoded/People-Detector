@@ -1,7 +1,7 @@
 # People-Detector
 High level python script that looks at a folder of video files and tells you which files contain people. 
 
-**Requirements and getting started:
+**Requirements and getting started:**
 
 This script relies on the work done on cvlib: https://github.com/arunponnusamy/cvlib/commits?author=arunponnusamy
 cvlib offers us some high level methods to detect common objects within photos or video without any experience with machine learning.
