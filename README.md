@@ -1,5 +1,5 @@
 # People-Detector
-High level python script that looks at a folder of video files and tells you which files contain people. 
+High level python script that looks at a folder of video files and tells you which files contain people. Note: It is recursive. you can have a folder of video folders as well. 
 
 **Requirements and getting started:**
 
