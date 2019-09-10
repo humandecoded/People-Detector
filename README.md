@@ -3,17 +3,17 @@ High level python script that looks at a folder of video files and tells you whi
 
 **Requirements and getting started:**
 
-This script relies on the work done on cvlib: https://github.com/arunponnusamy/cvlib/commits?author=arunponnusamy
+This script relies on the work done on cvlib: https://github.com/arunponnusamy/cvlib
 cvlib offers us some high level methods to detect common objects within photos or video without any experience with machine learning.
 
 To get started (recommend creating a virtual environment):
-- pip install opencv-python
-- pip install tensorflow
-- pip install cvlib
+- `pip install opencv-python`
+- `pip install tensorflow`
+- `pip install cvlib`
 When you first run this script it will reach out and download the pre-trained YOLO model as well.
 
 After that it's as simple as:
-python people-detector.py -d <path to folder with video files>
+`python people-detector.py -d <path to folder with video files>`
 The script will use tensorflow to analyze your files for people. It will write the results to a .txt file in your 
 current folder. A blank text file means no humans were found.
   
