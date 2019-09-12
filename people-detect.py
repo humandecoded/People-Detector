@@ -1,4 +1,8 @@
 
+""" To do: 
+-Add in text message alert functionality with twilio, option passed via flag --twilio """
+
+
 
 
 import cvlib    #high level module, uses YOLO model with the find_common_objects method
@@ -16,6 +20,7 @@ def humanChecker(video_name):
     frame_count = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
     
     #look at every nth frame of our file, run frame through detect_common_objects
+    #Increase 'n' to examine fewer frames and increase speed. Might reduce accuracy though.
     n = 3
     for x in range(1, frame_count - 3, n):
         vid.set(cv2.CAP_PROP_POS_FRAMES, x)
