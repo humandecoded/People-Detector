@@ -32,13 +32,15 @@ def getListOfFiles(dir_name):
     all_files = list()
     # Iterate over all the entries
     for entry in list_of_files:
-        # Create full path
-        full_path = os.path.join(dir_name, entry)
-        # If entry is a directory then get the list of files in this directory 
-        if os.path.isdir(full_path):
-            all_files = all_files + getListOfFiles(full_path)
-        else:
-            all_files.append(full_path)              
+        #ignore hidden files and directories
+        if entry[0] != '.':
+            # Create full path
+            full_path = os.path.join(dir_name, entry)
+            # If entry is a directory then get the list of files in this directory 
+            if os.path.isdir(full_path):
+                all_files = all_files + getListOfFiles(full_path)
+            else:
+                all_files.append(full_path)              
     return all_files
 
 
