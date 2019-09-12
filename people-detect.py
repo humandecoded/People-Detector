@@ -8,6 +8,8 @@ import os
 from datetime import datetime
 
 #function takes a file name, checks that file for human objects
+#added a new comment
+#I needed one more comment
 def humanChecker(video_name):
     #open video stream
     vid = cv2.VideoCapture(video_name)
