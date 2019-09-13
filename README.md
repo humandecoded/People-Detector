@@ -10,6 +10,8 @@ To get started (recommend creating a virtual environment):
 - `pip install opencv-python`
 - `pip install tensorflow`
 - `pip install cvlib`
+- `pip install twilio`
+
 When you first run this script it will reach out and download the pre-trained YOLO model as well.
 
 After that it's as simple as:
@@ -17,7 +19,7 @@ After that it's as simple as:
 or
 `python people-detector.py -d <path to folder with video files> --twilio`
 
-The twilio option requires you to have set up a twilio account and have an SID, a Token, a Twilio number and a verified number to send to. These values can either be hardcoded in to the script or referenced as environmenta variables. Functionally speaking, this feature is only useful if you're going to automate this script. 
+The twilio option requires you to have set up a twilio account and have an SID, a Token, a Twilio number and a verified number to send to. These values can either be hardcoded in to the script or referenced as environment variables. Functionally speaking, this feature is only useful if you're going to automate this script. 
 For example: Every morning I have a cron job run that uses this script to analyze the nightime footage from my outdoor surveilance cameras. By using the --twilio flag I get a text if the script finds people on the footage and I can investigate further later.
 
 
