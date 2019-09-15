@@ -6,6 +6,8 @@ import os
 import sys
 from datetime import datetime
 from twilio.rest import Client  #used for texting if you'd like, flag is optional, 
+import smtplib, ssl #for sending email alerts
+
 
 
 #function takes a file name, checks that file for human objects
@@ -51,8 +53,11 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument('-d', '--directory', required=True, help='Path to video folder')
     parser.add_argument('--twilio', action='store_true', help='Flag to use Twilio text notification')
+    parser.add_argument('--email', action='store_true', help='Flag to use email notification')
     args = vars(parser.parse_args())
     
+    human_detected = False
+
     #if the --twilio flag is used, this will look for environmental variables holding this needed information
     #you can hardcode this information here if you'd like though. It's less secure but if you're the only one
     #using this script it's probably fine
@@ -66,17 +71,47 @@ if __name__ == "__main__":
             print('Something went wrong with the Twilio variables. Either set your environmental variables or hardcode values in to script: TWILIO_TOKEN, TWILIO_SID, TWILIO_FROM, TWILIO_TO')
             sys.exit(1)
 
+    #if the --email flag is used, this will look for environmental variables holding this needed information
+    #you can hardcode this information here if you'd like though. It's less secure but if you're the only one
+    #using this script it's probably fine
+    if args['email']:
+        try:
+            SENDER_EMAIL = os.environ['ALERT_SENDER_EMAIL']
+            SENDER_PASS = os.environ['ALERT_SENDER_PASS']
+            RECEIVER_EMAIL = os.environ['ALERT_RECEIVER_EMAIL']
+        except:
+            print('Something went wrong with Email variables. Either set your environmental variables or hardcode values in to script')
+            sys.exit(1)
+    
+
     #create our log file and write the file names where we detect people
     time_stamp = datetime.now().strftime('%m%d%Y-%H:%M:%S') + '.txt'
     with open(time_stamp, 'w') as log_file:
+        #loop through all our video files
         for current_file in getListOfFiles(args['directory'] + '/'):
             print(f'Working on {current_file}')
             if humanChecker(str(current_file)):
+                human_detected = True
                 print(f'Human detected in {current_file}')
                 log_file.write(f'omg. intruder alert in {current_file} \n' )
+
     #if people are detected and --twilio flag has been set, send a text
-    with open(time_stamp, 'r') as log_file:
-        if log_file.readline() != '' and args['twilio']:
-            client = Client(TWILIO_SID, TWILIO_TOKEN)
-            client.messages.create(body="Human Detected. Check log files", from_=TWILIO_FROM, to=TWILIO_TO)
+    if args['twilio'] and human_detected:
+        client = Client(TWILIO_SID, TWILIO_TOKEN)
+        client.messages.create(body=f"Human Detected. Check log files", from_=TWILIO_FROM, to=TWILIO_TO)
+    
+    #if people are detected and --email flag has been set, send an email
+    if args['email'] and human_detected:
+        port = 465  # For SSL
+        smtp_server = "smtp.gmail.com"
+        sender_email = SENDER_EMAIL
+        receiver_email = RECEIVER_EMAIL
+        password = SENDER_PASS
+        message = f'Intruder Alert. Human Detected. Check log files'
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, message)
+
         
