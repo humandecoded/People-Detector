@@ -57,6 +57,7 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
     
     human_detected = False
+    file_list = []     #list of files containing people
 
     #if the --twilio flag is used, this will look for environmental variables holding this needed information
     #you can hardcode this information here if you'd like though. It's less secure but if you're the only one
@@ -94,6 +95,7 @@ if __name__ == "__main__":
                 human_detected = True
                 print(f'Human detected in {current_file}')
                 log_file.write(f'omg. intruder alert in {current_file} \n' )
+                file_list.append(str(current_file))
 
     #if people are detected and --twilio flag has been set, send a text
     if args['twilio'] and human_detected:
@@ -104,14 +106,11 @@ if __name__ == "__main__":
     if args['email'] and human_detected:
         port = 465  # For SSL
         smtp_server = "smtp.gmail.com"
-        sender_email = SENDER_EMAIL
-        receiver_email = RECEIVER_EMAIL
-        password = SENDER_PASS
-        message = f'Intruder Alert. Human Detected. Check log files'
-
+        message = '\n'.join(file_list)
+        
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-            server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, message)
+            server.login(SENDER_EMAIL, SENDER_PASS)
+            server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, message)
 
         
