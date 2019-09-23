@@ -11,7 +11,8 @@ import smtplib, ssl #for sending email alerts
 
 
 #function takes a file name, checks that file for human objects
-def humanChecker(video_name):
+#saves the frames with people detected into directory named 'time_stamp'
+def humanChecker(video_name, time_stamp, yolo):
     #open video stream
     vid = cv2.VideoCapture(video_name)
 
@@ -24,9 +25,16 @@ def humanChecker(video_name):
     for x in range(1, frame_count - 3, n):
         vid.set(cv2.CAP_PROP_POS_FRAMES, x)
         _ , frame = vid.read()
-        _ , label, _ = cvlib.detect_common_objects(frame)
+        bbox , labels, conf = cvlib.detect_common_objects(frame, model=yolo)
 
-        if 'person' in label:
+        if 'person' in labels:
+            #create a folder for our images, save frame with detected human
+            cwd = os.getcwd()
+            #create image with bboxes showing objects and save
+            marked_frame = cvlib.object_detection.draw_bbox(frame, bbox, labels, conf, write_conf=True)
+            file_name = os.path.basename(os.path.normpath(video_name))
+            cv2.imwrite(cwd + '/' + time_stamp + '/' + file_name + '.jpeg', marked_frame)
+
             return True
     return False
 
@@ -47,17 +55,24 @@ def getListOfFiles(dir_name):
                 all_files.append(full_path)              
     return all_files
 
-
+#############################################################################################################################
 if __name__ == "__main__":
 
     parser = ArgumentParser()
     parser.add_argument('-d', '--directory', required=True, help='Path to video folder')
     parser.add_argument('--twilio', action='store_true', help='Flag to use Twilio text notification')
     parser.add_argument('--email', action='store_true', help='Flag to use email notification')
+    parser.add_argument('--full_yolo', action='store_true', help='Flag to indicate using the full YoloV3 model instead of tiny. Will be slower.')
     args = vars(parser.parse_args())
     
     human_detected = False
     file_list = []     #list of files containing people
+    
+    #decide which model we'll use, default is 'yolov3-tiny', faster but less accurate
+    if args['full_yolo']:
+        yolo = 'yolov3'
+    else:
+        yolo = 'yolov3-tiny'
 
     #if the --twilio flag is used, this will look for environmental variables holding this needed information
     #you can hardcode this information here if you'd like though. It's less secure but if you're the only one
@@ -86,12 +101,13 @@ if __name__ == "__main__":
     
 
     #create our log file and write the file names where we detect people
-    time_stamp = datetime.now().strftime('%m%d%Y-%H:%M:%S') + '.txt'
-    with open(time_stamp, 'w') as log_file:
+    time_stamp = datetime.now().strftime('%m%d%Y-%H:%M:%S')
+    os.mkdir(time_stamp)
+    with open(time_stamp + '/' + time_stamp +'.txt', 'w') as log_file:
         #loop through all our video files
         for current_file in getListOfFiles(args['directory'] + '/'):
             print(f'Working on {current_file}')
-            if humanChecker(str(current_file)):
+            if humanChecker(str(current_file), time_stamp, yolo):
                 human_detected = True
                 print(f'Human detected in {current_file}')
                 log_file.write(f'omg. intruder alert in {current_file} \n' )
