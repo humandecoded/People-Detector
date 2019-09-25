@@ -25,7 +25,7 @@ def humanChecker(video_name, time_stamp, yolo):
     for x in range(1, frame_count - 3, n):
         vid.set(cv2.CAP_PROP_POS_FRAMES, x)
         _ , frame = vid.read()
-        bbox , labels, conf = cvlib.detect_common_objects(frame, model=yolo)
+        bbox , labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=.4)
 
         if 'person' in labels:
             #create a folder for our images, save frame with detected human
@@ -100,18 +100,23 @@ if __name__ == "__main__":
             sys.exit(1)
     
 
-    #create our log file and write the file names where we detect people
+    #create our log file, create a directory to hold snapshots 
     time_stamp = datetime.now().strftime('%m%d%Y-%H:%M:%S')
     os.mkdir(time_stamp)
+    #open a log file and loop over all our video files
     with open(time_stamp + '/' + time_stamp +'.txt', 'w') as log_file:
         #loop through all our video files
-        for current_file in getListOfFiles(args['directory'] + '/'):
-            print(f'Working on {current_file}')
+        video_dir = getListOfFiles(args['directory'] + '/')
+        counter = 1
+        for current_file in video_dir:
+            print(f'Working on {current_file}: {counter} of {len(video_dir)}: {int((counter/len(video_dir)*100))}%')
+            #check for people
             if humanChecker(str(current_file), time_stamp, yolo):
                 human_detected = True
                 print(f'Human detected in {current_file}')
                 log_file.write(f'omg. intruder alert in {current_file} \n' )
                 file_list.append(str(current_file))
+            counter += 1
 
     #if people are detected and --twilio flag has been set, send a text
     if args['twilio'] and human_detected:
