@@ -14,17 +14,25 @@ To get started (recommend creating a virtual environment):
 
 When you first run this script it will reach out and download the pre-trained YOLO model as well.
 
-After that it's as simple as any of the following (or combination thereof):
+After that it's as simple as:
 - `python people-detector.py -d <path to folder with video files>`
-- `python people-detector.py -d <path to folder with video files> --twilio --email`
-- `python people-detector.py -d <path to folder with video files> --full_yolo`
 
-The default model is 'yolov3-tiny'. This is a faster but less accurate model. The `--full_yolo` flag will give you the larger model but at the expense of time and CPU load.
+There are a number of optional flags outlined below.
 
-The twilio option requires you to have set up a twilio account and have an SID, a Token, a Twilio number and a verified number to send to. These values can either be hardcoded in to the script or referenced as environment variables.
+The default model is 'yolov3'. This model is CPU intensive. The `--tiny_yolo` flag will give you the smaller model that is faster but less accurate.
 
-The email option requires you to have a gmail account set to allow "less secure" sign ins. I reccomend setting up a separate account you will only use for sending yourself logs. You can learn more about this here:
+The `--twilio` flag requires you to have set up a twilio account and have an SID, a Token, a Twilio number and a verified number to send to. These values can either be hardcoded in to the script or referenced as environment variables. Examine the script for where this happens.
+
+The `--email` option requires you to have a gmail account set to allow "less secure" sign ins. I reccomend setting up a separate account you will only use for sending yourself logs. You can learn more about this here:
 https://realpython.com/python-send-email/#option-1-setting-up-a-gmail-account-for-development
+You can hard code your credentials in to the script but I recommend referencing env variables instead. 
+
+The `--continuous` flag will examine the entire clip for human detections. The default behavior is to stop after first detection. 
+
+The `--frames` flag sets the program to examine every nth frame. The default is every 10th frame.
+
+The `--confidence` flag will adjust the confidence level that trips a detection alert. The default is 65%.
+
 
 Functionally speaking, the email and twilio options only make sense if you intend to use this script in an automated workflow. See below for how I use it. 
 
