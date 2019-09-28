@@ -72,7 +72,7 @@ if __name__ == "__main__":
     parser.add_argument('--email', action='store_true', help='Flag to use email notification')
     parser.add_argument('--tiny_yolo', action='store_true', help='Flag to indicate using YoloV3-tiny model instead of the full one. Will be faster but less accurate.')
     parser.add_argument('--continuous', action='store_true', help='This option will go through entire video file and save all frames with people. Default behavior is to stop after first person sighting.')
-    parser.add_argument('--confidence', type=int, choices=range(1,100), help='Input a value between 1-99. This represents the percent confidence you require for a hit. Default is 65')
+    parser.add_argument('--confidence', type=int, choices=range(1,100), default=65, help='Input a value between 1-99. This represents the percent confidence you require for a hit. Default is 65')
     parser.add_argument('--frames', type=int, default=10, help='Only examine every nth frame. Default is 10')
     args = vars(parser.parse_args())
     
