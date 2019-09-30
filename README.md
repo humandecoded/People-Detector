@@ -25,7 +25,7 @@ The `--twilio` flag requires you to have set up a twilio account and have an SID
 
 The `--email` option requires you to have a gmail account set to allow "less secure" sign ins. I reccomend setting up a separate account you will only use for sending yourself logs. You can learn more about this here:
 https://realpython.com/python-send-email/#option-1-setting-up-a-gmail-account-for-development
-You can hard code your credentials in to the script but I recommend referencing env variables instead. 
+You can hard code your credentials in to the script but I recommend referencing env variables instead. Print out of log file is placed in body. Screenshots of detected humans are attached to the email.
 
 The `--continuous` flag will examine the entire clip for human detections. The default behavior is to stop after first detection. 
 
@@ -38,7 +38,7 @@ Functionally speaking, the email and twilio options only make sense if you inten
 
 The script will use tensorflow to analyze your files for people. It creates a folder named after the current date and time. As it finds frames with people in them it will save a jpeg of that frame in to that folder. It includes a border box around common objects as well as a confidence percentage. This gives you a good idea of what it thinks are people and how confident it is. At the end it will also save a log file of all video files containing people. 
 
-I recommend testing in your selected environment(s) and time(s) of day to make sure it will work for you. So far, the yolov3-tiny model has worked fine for me during day and night. 
+I recommend testing in your selected environment(s) and time(s) of day to make sure it will work for you. So far, the yolov3-tiny model has not proved accurate enough for me. The default is the full yolo model.
   
 ## Why use this script?
 I wrote this script as an automated option for analyzing outdoor security footage. 
