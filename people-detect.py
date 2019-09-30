@@ -7,6 +7,8 @@ import sys
 from datetime import datetime
 from twilio.rest import Client  #used for texting if you'd like, flag is optional, 
 import smtplib, ssl #for sending email alerts
+from email.message import EmailMessage
+import imghdr
 
 
 
@@ -135,7 +137,7 @@ if __name__ == "__main__":
             if humanChecker(str(current_file), time_stamp, yolo=yolo_string, n=number_of_frames, confidence=confidence_percent, continuous=args['continuous']):
                 human_detected = True
                 print(f'Human detected in {current_file}')
-                log_file.write(f'omg. intruder alert in {current_file} \n' )
+                log_file.write(f'{current_file} \n' )
                 detection_list.append(str(current_file))
             counter += 1
 
@@ -143,16 +145,38 @@ if __name__ == "__main__":
     if args['twilio'] and human_detected:
         client = Client(TWILIO_SID, TWILIO_TOKEN)
         client.messages.create(body=f"Human Detected. Check log files", from_=TWILIO_FROM, to=TWILIO_TO)
+    if args['twilio'] and not human_detected:
+        client = Client(TWILIO_SID, TWILIO_TOKEN)
+        client.messages.create(body=f"All Clear.", from_=TWILIO_FROM, to=TWILIO_TO)
     
     #if people are detected and --email flag has been set, send an email
+    # tyring to add ability to attach images to email
     if args['email'] and human_detected:
         port = 465  # For SSL
         smtp_server = "smtp.gmail.com"
-        message = '\n'.join(detection_list)
+        
+        #set up our message
+        with open(time_stamp + '/' + time_stamp + '.txt' ) as f:
+            msg = EmailMessage()
+            msg.set_content(f.read())
+        msg['From'] = SENDER_EMAIL
+        msg['To'] = RECEIVER_EMAIL
+        msg['Subject'] = 'Intruder Alert'
+        
+        list_of_files = os.listdir(time_stamp)
+        #add our attachments, ignoring the .txt file
+        for x in list_of_files:
+            if x[-3:] != 'txt':
+                with open(time_stamp + '/' + x, 'rb') as fp:
+                    img_data = fp.read()
+                msg.add_attachment(img_data, maintype='image', subtype=imghdr.what(None, img_data))
+        
         
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
             server.login(SENDER_EMAIL, SENDER_PASS)
-            server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, message)
+            server.send_message(msg)
+
+            
 
         
