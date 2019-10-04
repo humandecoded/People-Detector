@@ -169,7 +169,7 @@ if __name__ == "__main__":
             if x[-3:] != 'txt':
                 with open(time_stamp + '/' + x, 'rb') as fp:
                     img_data = fp.read()
-                msg.add_attachment(img_data, maintype='image', subtype=imghdr.what(None, img_data))
+                msg.add_attachment(img_data, maintype='image', subtype=imghdr.what(None, img_data), filename=x)
         
         
         context = ssl.create_default_context()
