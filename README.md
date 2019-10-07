@@ -1,5 +1,5 @@
 # People-Detector
-High level python script that looks at a folder of video files and tells you which files contain people. Note: It is recursive. you can have a folder of video folders as well. 
+High level python script that looks at a folder of video files and tells you which files contain people. Saves snapshots of those detections and a log file of all detections. Note: It is recursive. You can have a folder of video folders as well. 
 
 ## Why I made this script?
 I wrote this script after having my backyard shed broken in to as well as the car in my driveway. After each break in I placed a motion activated camera in the respective area. My goal here is not to catch people "in the act" but instead be alerted that people have been creeping around my backyard or checking the cars in my driveway for unlocked doors. There is way to much natural motion in these areas for me to review footage everytime the camera detects motion. This script will automate the "busy work" and let me know what clips I might want to look in to.
@@ -12,7 +12,7 @@ I have an old Imac I use as a dvr for my camera system. Every morning I have a s
 - filter out any unwanted footage based off camera location and time stamp, leaving me with only my backyard and driveway night footage.
 - run this script on that footage, sending me a text and email alert if it detects a person shaped object in any of that footage along with screenshots of the "people" it detects.
 
-**Requirements and getting started:**
+## Requirements and getting started:
 
 This script relies on the work done on cvlib: https://github.com/arunponnusamy/cvlib
 cvlib offers us some high level methods to detect common objects within photos or videos without any experience with machine learning.
@@ -26,7 +26,7 @@ To get started (recommend creating a virtual environment):
 When you first run this script it will reach out and download the pre-trained YOLO model as well.
 
 After that it's as simple as:
-- `python people-detector.py -d <path to folder with video files>`
+- `python people-detect.py -d <path to folder with video files>`
 
 There are a number of optional flags outlined below.
 
@@ -47,7 +47,7 @@ The `--confidence n`  flag will adjust the confidence threshold that trips a det
 
 Functionally speaking, the email and twilio options only make sense if you intend to use this script in an automated workflow. See above for how I use it. 
 
-When ran, this scriptvcreates a folder named after the current date and time. As it finds frames with people in them it will save a jpeg of that frame in to the folder. It includes a border box around common objects as well as a confidence percentage. This gives you a good idea of what it thinks are people and how confident it is. At the end it will also save a log file of all video files containing people. 
+When ran, this script creates a folder named after the current date and time. As it finds frames with people in them it will save a jpeg of that frame in to the folder. It includes a border box around common objects as well as a confidence percentage. This gives you a good idea of what it thinks are people and how confident it is. At the end it will also save a log file of all video files containing people. 
 
 I recommend testing in your selected environment(s) and time(s) of day to make sure it will work for you. So far, the yolov3-tiny model has not proved accurate enough for me. The default is the full yolo model.
   
