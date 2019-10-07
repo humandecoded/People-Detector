@@ -196,7 +196,7 @@ if __name__ == "__main__":
     if args['twilio']:
         twilioAlertSender(human_detected, TWILIO_TOKEN, TWILIO_SID, TWILIO_FROM, TWILIO_TO)
     
-    if args['email']:
+    if args['email'] and human_detected:
         emailAlertSender(time_stamp, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL)
     
 
