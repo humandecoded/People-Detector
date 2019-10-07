@@ -12,41 +12,45 @@ import imghdr
 
 
 
-#function takes a file name, checks that file for human objects
-#saves the frames with people detected into directory named 'time_stamp'
-def humanChecker(video_name, time_stamp, yolo='yolov3', continuous = False, n=10, confidence=.65):
+#function takes a file name(full path), checks that file for human shaped objects
+#saves the frames with people detected into directory named 'save_directory'
+def humanChecker(video_file_name, save_directory, yolo='yolov3', continuous=False, nth_frame=10, confidence=.65):
     #open video stream
-    vid = cv2.VideoCapture(video_name)
+    vid = cv2.VideoCapture(video_file_name)
+
     #tracking if we've found a human or not
-    human_found = False 
+    is_human_found = False 
+
     #get approximate frame count for video
     frame_count = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
     print(f'{frame_count} frames')
 
-    #in 'continuous mode' we'll need to increment every time a person is detected
-    person_counter = 0   
-    #look at every nth frame of our file, run frame through detect_common_objects
-    #Increase 'n' to examine fewer frames and increase speed. Might reduce accuracy though.
-    for x in range(1, frame_count - 3, n):
-        vid.set(cv2.CAP_PROP_POS_FRAMES, x)
+    #we'll need to increment every time a person is detected
+    person_detection_counter = 0   
+
+    #look at every nth_frame of our video file, run frame through detect_common_objects
+    #Increase 'nth_frame' to examine fewer frames and increase speed. Might reduce accuracy though.
+    for frame_number in range(1, frame_count - 3, nth_frame):
+        vid.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
         _ , frame = vid.read()
         bbox , labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=confidence)
         
-        
         if 'person' in labels:
-            person_counter += 1
-            human_found = True
-            #create a folder for our images, save frame with detected human
-            cwd = os.getcwd()
+            person_detection_counter += 1
+            is_human_found = True
+
             #create image with bboxes showing objects and save
             marked_frame = cvlib.object_detection.draw_bbox(frame, bbox, labels, conf, write_conf=True)
-            file_name = os.path.basename(os.path.normpath(video_name))
-            cv2.imwrite(cwd + '/' + time_stamp + '/' + file_name + '-' + str(person_counter) + '.jpeg', marked_frame)
-            
+            save_file_name = os.path.basename(os.path.normpath(video_file_name)) + '-' + str(person_detection_counter) + '.jpeg'
+            cv2.imwrite(save_directory + '/' + save_file_name , marked_frame)
+
             if continuous == False:
                 break
             
-    return human_found
+    return is_human_found
+
+
+
 
 #takes a directory and returns all files and directories within
 def getListOfFiles(dir_name):
@@ -64,6 +68,51 @@ def getListOfFiles(dir_name):
             else:
                 all_files.append(full_path)              
     return all_files
+
+
+
+
+def twilioAlertSender(human_detected, TWILIO_TOKEN, TWILIO_SID, TWILIO_FROM, TWILIO_TO):
+     #if people are detected and --twilio flag has been set, send a text
+    if human_detected:
+        client = Client(TWILIO_SID, TWILIO_TOKEN)
+        client.messages.create(body=f"Human Detected. Check log files", from_=TWILIO_FROM, to=TWILIO_TO)
+    else:
+        client = Client(TWILIO_SID, TWILIO_TOKEN)
+        client.messages.create(body=f"All Clear.", from_=TWILIO_FROM, to=TWILIO_TO)
+
+
+
+
+def emailAlertSender(save_directory, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL):
+    
+    port = 465  # For SSL
+    smtp_server = "smtp.gmail.com"
+        
+    #set up our message body as contents of log file
+    with open(save_directory + '/' + save_directory + '.txt' ) as f:
+        msg = EmailMessage()
+        msg.set_content(f.read())
+
+    msg['From'] = SENDER_EMAIL
+    msg['To'] = RECEIVER_EMAIL
+    msg['Subject'] = 'Intruder Alert'
+    
+    list_of_files = os.listdir(save_directory)
+    #add our attachments, ignoring the .txt file
+    for image_file_name in list_of_files:
+        if image_file_name[-3:] != 'txt':
+            with open(save_directory + '/' + image_file_name, 'rb') as image:
+                img_data = image.read()
+            msg.add_attachment(img_data, maintype='image', subtype=imghdr.what(None, img_data), filename=image_file_name)
+    
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(SENDER_EMAIL, SENDER_PASS)
+        server.send_message(msg)
+
+
+
 
 #############################################################################################################################
 if __name__ == "__main__":
@@ -109,73 +158,51 @@ if __name__ == "__main__":
             print('Something went wrong with Email variables. Either set your environmental variables or hardcode values in to script')
             sys.exit(1)
 
-    number_of_frames = args['frames']
+    every_nth_frame = args['frames']
     confidence_percent = args['confidence'] / 100
 
-    #create our log file, create a directory to hold snapshots 
+    #create a directory to hold snapshots and log file
     time_stamp = datetime.now().strftime('%m%d%Y-%H:%M:%S')
     os.mkdir(time_stamp)
+    
     print('Beginning Detection')
     print(f'Directory {time_stamp} has been created')
     print(f"Email notifications set to {args['email']}. Text notification set to {args['twilio']}.")
     print(f"Confidence threshold set to {args['confidence']}%")
-    print(f'Examining every {number_of_frames} frames.')
+    print(f'Examining every {every_nth_frame} frames.')
     print(f"Continous examination is set to {args['continuous']}")
     print('\n\n')
 
     human_detected = False
-    detection_list = []    #list of files with detected humnans
     
     #open a log file and loop over all our video files
     with open(time_stamp + '/' + time_stamp +'.txt', 'w') as log_file:
-        #loop through all our video files
-        video_dir = getListOfFiles(args['directory'] + '/')
-        counter = 1
-        for current_file in video_dir:
-            print(f'Working on {current_file}: {counter} of {len(video_dir)}: {int((counter/len(video_dir)*100))}%    ', end='')
+        
+        video_directory_list = getListOfFiles(args['directory'] + '/')
+        
+        #what video we are on
+        working_on_counter = 1
+        
+        for video_file in video_directory_list:
+            print(f'Working on {video_file}: {working_on_counter} of {len(video_directory_list)}: {int((working_on_counter/len(video_directory_list)*100))}%    ', end='')
+            
             #check for people
-            if humanChecker(str(current_file), time_stamp, yolo=yolo_string, n=number_of_frames, confidence=confidence_percent, continuous=args['continuous']):
+            if humanChecker(str(video_file), time_stamp, yolo=yolo_string, nth_frame=every_nth_frame, confidence=confidence_percent, continuous=args['continuous']):
                 human_detected = True
-                print(f'Human detected in {current_file}')
-                log_file.write(f'{current_file} \n' )
-                detection_list.append(str(current_file))
-            counter += 1
-
-    #if people are detected and --twilio flag has been set, send a text
-    if args['twilio'] and human_detected:
-        client = Client(TWILIO_SID, TWILIO_TOKEN)
-        client.messages.create(body=f"Human Detected. Check log files", from_=TWILIO_FROM, to=TWILIO_TO)
-    if args['twilio'] and not human_detected:
-        client = Client(TWILIO_SID, TWILIO_TOKEN)
-        client.messages.create(body=f"All Clear.", from_=TWILIO_FROM, to=TWILIO_TO)
+                print(f'Human detected in {video_file}')
+                log_file.write(f'{video_file} \n' )
+            working_on_counter += 1
     
-    #if people are detected and --email flag has been set, send an email
-    # tyring to add ability to attach images to email
-    if args['email'] and human_detected:
-        port = 465  # For SSL
-        smtp_server = "smtp.gmail.com"
-        
-        #set up our message
-        with open(time_stamp + '/' + time_stamp + '.txt' ) as f:
-            msg = EmailMessage()
-            msg.set_content(f.read())
-        msg['From'] = SENDER_EMAIL
-        msg['To'] = RECEIVER_EMAIL
-        msg['Subject'] = 'Intruder Alert'
-        
-        list_of_files = os.listdir(time_stamp)
-        #add our attachments, ignoring the .txt file
-        for x in list_of_files:
-            if x[-3:] != 'txt':
-                with open(time_stamp + '/' + x, 'rb') as fp:
-                    img_data = fp.read()
-                msg.add_attachment(img_data, maintype='image', subtype=imghdr.what(None, img_data), filename=x)
-        
-        
-        context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-            server.login(SENDER_EMAIL, SENDER_PASS)
-            server.send_message(msg)
+    if args['twilio']:
+        twilioAlertSender(human_detected, TWILIO_TOKEN, TWILIO_SID, TWILIO_FROM, TWILIO_TO)
+    
+    if args['email']:
+        emailAlertSender(time_stamp, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL)
+    
+
+    
+    
+    
 
             
 
