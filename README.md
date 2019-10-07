@@ -2,7 +2,7 @@
 High level python script that looks at a folder of video files and tells you which files contain people. Saves snapshots of those detections and a log file of all detections. Note: It is recursive. You can have a folder of video folders as well. 
 
 ## Why I made this script?
-I wrote this script after having my backyard shed broken in to as well as the car in my driveway. After each break in I placed a motion activated camera in the respective area. My goal here is not to catch people "in the act" but instead be alerted that people have been creeping around my backyard or checking the cars in my driveway for unlocked doors. There is way to much natural motion in these areas for me to review footage everytime the camera detects motion. This script will automate the "busy work" and let me know what clips I might want to look in to.
+I wrote this script after having my backyard shed broken in to as well as the car in my driveway. After each break-in I placed a motion activated camera in the respective area. My goal here is not to catch people "in the act" but instead be alerted that people have been creeping around my backyard or checking the cars in my driveway for unlocked doors. There is way too much natural motion in these areas for me to review footage every time the camera detects motion. This script will automate the "busy work" and let me know what clips I might want to look in to.
  
 My hope hear is to catch a pattern of behavior. For example, "Every Sunday night someone tries the car doors in my driveway"
 
