@@ -11,37 +11,58 @@ from email.message import EmailMessage
 import imghdr
 
 
+#these will need to be fleshed out to not miss any formats
+IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.tiff', '.gif']
+VID_EXTENSIONS = ['.mov', '.mp4', '.avi', '.mpg', '.mpeg', '.m4v']
+
+
 
 #function takes a file name(full path), checks that file for human shaped objects
 #saves the frames with people detected into directory named 'save_directory'
 def humanChecker(video_file_name, save_directory, yolo='yolov3', continuous=False, nth_frame=10, confidence=.65):
-    #open video stream
-    vid = cv2.VideoCapture(video_file_name)
-
+   
     #tracking if we've found a human or not
-    is_human_found = False 
-
-    #get approximate frame count for video
-    frame_count = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
-    print(f'{frame_count} frames')
-
-    #we'll need to increment every time a person is detected
+    is_human_found = False
+    #we'll need to increment every time a person is detected for file naming
     person_detection_counter = 0   
+
+
+    #check if image
+    if os.path.splitext(video_file_name)[1] in IMG_EXTENSIONS:
+        frame = cv2.imread(video_file_name)  #our frame will just be the image
+        frame_count = 5   #this is necessary so our for loop runs below
+        nth_frame = 1
+    #check if video,  
+    elif os.path.splitext(video_file_name)[1] in VID_EXTENSIONS:
+        vid = cv2.VideoCapture(video_file_name)
+        #get approximate frame count for video
+        frame_count = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
+    #if neither video nor image, set up conditions to skip the for loop
+    else:
+        frame_count = 4
+        nth_frame = 1
+
+    print(f'{frame_count} frames')
 
     #look at every nth_frame of our video file, run frame through detect_common_objects
     #Increase 'nth_frame' to examine fewer frames and increase speed. Might reduce accuracy though.
     for frame_number in range(1, frame_count - 3, nth_frame):
-        vid.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
-        _ , frame = vid.read()
-        bbox , labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=confidence)
         
+        #if not dealing with an image
+        if os.path.splitext(video_file_name)[1] not in IMG_EXTENSIONS:
+            vid.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+            _ , frame = vid.read()
+           
+        #feed our frame (or image) in to detect_common_objects
+        bbox , labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=confidence)
+
         if 'person' in labels:
             person_detection_counter += 1
             is_human_found = True
 
             #create image with bboxes showing objects and save
             marked_frame = cvlib.object_detection.draw_bbox(frame, bbox, labels, conf, write_conf=True)
-            save_file_name = os.path.basename(os.path.normpath(video_file_name)) + '-' + str(person_detection_counter) + '.jpeg'
+            save_file_name = os.path.basename(os.path.splitext(video_file_name)[0]) + '-' + str(person_detection_counter) + '.jpeg'
             cv2.imwrite(save_directory + '/' + save_file_name , marked_frame)
 
             if continuous == False:
