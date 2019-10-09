@@ -13,7 +13,7 @@ import imghdr
 
 #these will need to be fleshed out to not miss any formats
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.tiff', '.gif']
-VID_EXTENSIONS = ['.mov', '.mp4', '.avi', '.mpg', '.mpeg', '.m4v']
+VID_EXTENSIONS = ['.mov', '.mp4', '.avi', '.mpg', '.mpeg', '.m4v', '.mkv']
 
 
 
