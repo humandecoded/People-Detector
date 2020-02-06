@@ -34,7 +34,7 @@ The default ML model is 'yolov3'. This model is big and CPU intensive. The `--ti
 
 The `--twilio` flag allows you to send text alerts but requires you to have set up a twilio account and have an SID, a Token, a Twilio number and a verified number to send to. You can learn more about this here: https://www.twilio.com/docs/sms/quickstart/python. These values can either be hardcoded in to the script or referenced as environment variables. Examine the script for where this happens.
 
-The `--email` option requires you to have a gmail account set to allow "less secure" sign ins. I reccomend setting up a separate account you will only use for sending yourself logs. You can learn more about this here:
+The `--email` option requires you to have a gmail account set to allow "less secure" sign ins. I recommend setting up a separate account you will only use for sending yourself logs. You can learn more about this here:
 https://realpython.com/python-send-email/#option-1-setting-up-a-gmail-account-for-development
 You can hard code your credentials in to the script but I recommend referencing env variables instead. Print out of log file is placed in body. Screenshots of detected humans are attached to the email.
 
