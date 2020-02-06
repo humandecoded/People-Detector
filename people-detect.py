@@ -154,7 +154,8 @@ def emailAlertSender(human_detected, save_directory, SENDER_EMAIL, SENDER_PASS, 
 if __name__ == "__main__":
 
     parser = ArgumentParser()
-    parser.add_argument('-d', '--directory', required=True, help='Path to video folder')
+    parser.add_argument('-d', '--directory', default='', help='Path to video folder')
+    parser.add_argument('-f', default='', help='Used to select an individual file')
     parser.add_argument('--twilio', action='store_true', help='Flag to use Twilio text notification')
     parser.add_argument('--email', action='store_true', help='Flag to use email notification')
     parser.add_argument('--tiny_yolo', action='store_true', help='Flag to indicate using YoloV3-tiny model instead of the full one. Will be faster but less accurate.')
@@ -168,6 +169,14 @@ if __name__ == "__main__":
         yolo_string = 'yolov3-tiny'
     else:
         yolo_string = 'yolov3'
+        
+    #check our inputs, can only use either -f or -d but must use one
+    if args['f'] == '' and args['directory'] == '':
+        print('You must select either a directory with -d <directory> or a file with -f <file name>')
+        sys.exit(1)
+    if args['f'] != '' and args['directory'] != '' :
+        print('Must select either -f or -d but can''t do both')
+        sys.exit(1)
 
     # if the --twilio flag is used, this will look for environment variables holding this needed information
     # you can hardcode this information here if you'd like though. It's less secure but if you're the only one
@@ -213,8 +222,10 @@ if __name__ == "__main__":
 
     # open a log file and loop over all our video files
     with open(time_stamp + '/' + time_stamp +'.txt', 'w') as log_file:
-
-        video_directory_list = getListOfFiles(args['directory'] + '/')
+        if args['f'] == '':
+            video_directory_list = getListOfFiles(args['directory'] + '/')
+        else:
+            video_directory_list = [args['f']]
 
         # what video we are on
         working_on_counter = 1
