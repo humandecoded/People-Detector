@@ -17,11 +17,14 @@ I have an old Imac I use as a dvr for my camera system. Every morning I have a s
 This script relies on the work done on cvlib: https://github.com/arunponnusamy/cvlib
 cvlib offers us some high level methods to detect common objects within photos or videos without any experience with machine learning.
 
-To get started (recommend creating a virtual environment):
-- `pip install opencv-python`
-- `pip install tensorflow`
-- `pip install cvlib`
-- `pip install twilio`
+## Tensorflow 2 does not yet support Python 3.8. Tensorflow 2.2 will add 3.8 support. You will want to create a virtual environment for python 3.7 before getting started. If you try to ` pip install tensorflow` from Python 3.8 it will not find tensorflow
+
+## Requirements 
+* First, activate your Python 3.7 virtual env
+* pip install tensorflow
+* pip install cvlib
+* pip install opencv-pythong
+* pip install twilio
 
 When you first run this script it will reach out and download the pre-trained YOLO model as well.
 
