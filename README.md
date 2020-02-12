@@ -21,10 +21,10 @@ cvlib offers us some high level methods to detect common objects within photos o
 
 ## Requirements 
 * First, activate your Python 3.7 virtual env
-* pip install tensorflow
-* pip install cvlib
-* pip install opencv-pythong
-* pip install twilio
+* `pip install tensorflow`
+* `pip install cvlib`
+* `pip install opencv-python`
+* `pip install twilio`
 
 When you first run this script it will reach out and download the pre-trained YOLO model as well.
 
