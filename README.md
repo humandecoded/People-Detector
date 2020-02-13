@@ -1,5 +1,6 @@
 # People-Detector
 High level python script that looks at a folder and tells you which video and/or image files contain people. Saves snapshots of those detections and a log file of all detections. Note: It is recursive. You can scan a folder of folders. This will skip over non-image/video files.
+Check out a demo at: https://youtu.be/q_o1P9zzW1o
 
 ## Why I made this script?
 I wrote this script after having my backyard shed broken in to as well as the car in my driveway. After each break-in I placed a motion activated camera in the respective area. My goal here is not to catch people "in the act" but instead be alerted that people have been creeping around my backyard or checking the cars in my driveway for unlocked doors. There is way too much natural motion in these areas for me to review footage every time the camera detects motion. This script will automate the "busy work" and let me know what clips I might want to look in to.
@@ -56,7 +57,7 @@ When ran, this script creates a folder named after the current date and time. As
 
 I recommend testing in your selected environment(s) and time(s) of day to make sure it will work for you. So far, the yolov3-tiny model has not proved accurate enough for me. The default is the full yolo model.
   
- 
+Check out a demo at: https://youtu.be/q_o1P9zzW1o 
 
 
 
