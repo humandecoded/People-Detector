@@ -21,7 +21,7 @@ VALID_FILE = False
 
 # function takes a file name(full path), checks that file for human shaped objects
 # saves the frames with people detected into directory named 'save_directory'
-def humanChecker(video_file_name, save_directory, yolo='yolov3', continuous=False, nth_frame=10, confidence=.65):
+def humanChecker(video_file_name, save_directory, yolo='yolov3', continuous=False, nth_frame=10, confidence=.65, gpu=False):
 
     # for modifying our global variarble VALID_FILE
     global VALID_FILE
@@ -65,7 +65,7 @@ def humanChecker(video_file_name, save_directory, yolo='yolov3', continuous=Fals
             _, frame = vid.read()
 
         # feed our frame (or image) in to detect_common_objects
-        bbox, labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=confidence)
+        bbox, labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=confidence, gpu_enabled=gpu)
 
         if 'person' in labels:
             person_detection_counter += 1
@@ -162,6 +162,8 @@ if __name__ == "__main__":
     parser.add_argument('--continuous', action='store_true', help='This option will go through entire video file and save all frames with people. Default behavior is to stop after first person sighting.')
     parser.add_argument('--confidence', type=int, choices=range(1,100), default=65, help='Input a value between 1-99. This represents the percent confidence you require for a hit. Default is 65')
     parser.add_argument('--frames', type=int, default=10, help='Only examine every nth frame. Default is 10')
+    parser.add_argument('--gpu', action='store_true', help='Attempt to run on GPU instead of CPU. Requires Open CV compiled with CUDA enables and Nvidia drivers set up correctly.')
+
     args = vars(parser.parse_args())
 
     # decide which model we'll use, default is 'yolov3', more accurate but takes longer
@@ -169,6 +171,7 @@ if __name__ == "__main__":
         yolo_string = 'yolov3-tiny'
     else:
         yolo_string = 'yolov3'
+
         
     #check our inputs, can only use either -f or -d but must use one
     if args['f'] == '' and args['directory'] == '':
@@ -205,6 +208,10 @@ if __name__ == "__main__":
 
     every_nth_frame = args['frames']
     confidence_percent = args['confidence'] / 100
+    
+    gpu_flag = False
+    if args['gpu']:
+        gpu_flag = True
 
     # create a directory to hold snapshots and log file
     time_stamp = datetime.now().strftime('%m%d%Y-%H:%M:%S')
@@ -217,7 +224,7 @@ if __name__ == "__main__":
     print(f'Examining every {every_nth_frame} frames.')
     print(f"Continous examination is set to {args['continuous']}")
     print('\n\n')
-
+    print(datetime.now().strftime('%m%d%Y-%H:%M:%S'))
     human_detected = False
 
     # open a log file and loop over all our video files
@@ -234,7 +241,7 @@ if __name__ == "__main__":
             print(f'Examining {video_file}: {working_on_counter} of {len(video_directory_list)}: {int((working_on_counter/len(video_directory_list)*100))}%    ', end='')
 
             # check for people
-            if humanChecker(str(video_file), time_stamp, yolo=yolo_string, nth_frame=every_nth_frame, confidence=confidence_percent, continuous=args['continuous']):
+            if humanChecker(str(video_file), time_stamp, yolo=yolo_string, nth_frame=every_nth_frame, confidence=confidence_percent, continuous=args['continuous'], gpu=gpu_flag):
                 human_detected = True
                 print(f'Human detected in {video_file}')
                 log_file.write(f'{video_file} \n' )
@@ -248,3 +255,4 @@ if __name__ == "__main__":
 
     if args['email'] is True:
         emailAlertSender(human_detected, time_stamp, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL)
+    print(datetime.now().strftime('%m%d%Y-%H:%M:%S'))
