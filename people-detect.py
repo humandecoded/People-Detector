@@ -235,6 +235,7 @@ if __name__ == "__main__":
     print(f"Confidence threshold set to {args['confidence']}%")
     print(f'Examining every {every_nth_frame} frames.')
     print(f"Continous examination is set to {args['continuous']}")
+    print(f"GPU is set to {args['gpu']}")
     print('\n\n')
     print(datetime.now().strftime('%m%d%Y-%H:%M:%S'))
 
