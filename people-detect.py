@@ -16,7 +16,11 @@ IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.tiff', '.gif']
 VID_EXTENSIONS = ['.mov', '.mp4', '.avi', '.mpg', '.mpeg', '.m4v', '.mkv']
 
 # used to make sure we are at least examining one valid file
-VALID_FILE = False
+VALID_FILE_ALERT = False
+# if an error is dectected, even once. Used for alerts
+ERROR_ALERT = False
+#used for alerts. True if human found once
+HUMAN_DETECTED_ALERT = False
 
 
 # function takes a file name(full path), checks that file for human shaped objects
@@ -24,10 +28,12 @@ VALID_FILE = False
 def humanChecker(video_file_name, save_directory, yolo='yolov3', continuous=False, nth_frame=10, confidence=.65, gpu=False):
 
     # for modifying our global variarble VALID_FILE
-    global VALID_FILE
+    global VALID_FILE_ALERT
 
     # tracking if we've found a human or not
     is_human_found = False
+    analyze_error = False
+    is_valid = False
 
     # we'll need to increment every time a person is detected for file naming
     person_detection_counter = 0
@@ -35,51 +41,65 @@ def humanChecker(video_file_name, save_directory, yolo='yolov3', continuous=Fals
     # check if image
     if os.path.splitext(video_file_name)[1] in IMG_EXTENSIONS:
         frame = cv2.imread(video_file_name)  # our frame will just be the image
-        frame_count = 5   # this is necessary so our for loop runs below
-        nth_frame = 1
-        VALID_FILE = True
-        print(f'Image')
+        #make sure it's a valid image
+        if frame is not None:
+            frame_count = 8   # this is necessary so our for loop runs below
+            nth_frame = 1
+            VALID_FILE_ALERT = True
+            is_valid = True
+            print(f'Image')
+        else:
+            is_valid = False
+            analyze_error = True
+            
 
     # check if video
     elif os.path.splitext(video_file_name)[1] in VID_EXTENSIONS:
         vid = cv2.VideoCapture(video_file_name)
         # get approximate frame count for video
         frame_count = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
-        VALID_FILE = True
-        print(f'{frame_count} frames')
-
-    # if neither video nor image, set up conditions to skip the for loop
+        #make sure it's a valid video
+        if frame_count > 0:
+            VALID_FILE_ALERT = True
+            is_valid = True
+            print(f'{frame_count} frames')
+        else:
+            is_valid = False
+            analyze_error = True
     else:
-        frame_count = 4
-        nth_frame = 1
-        print('Not a valid file')
+        print(f'\nSkipping {video_file_name}')
+    
+    if is_valid:
+        # look at every nth_frame of our video file, run frame through detect_common_objects
+        # Increase 'nth_frame' to examine fewer frames and increase speed. Might reduce accuracy though.
+        # Note: we can't use frame_count by itself because it's an approximation and could lead to errors
+        for frame_number in range(1, frame_count - 6, nth_frame):
 
-    # look at every nth_frame of our video file, run frame through detect_common_objects
-    # Increase 'nth_frame' to examine fewer frames and increase speed. Might reduce accuracy though.
-    # Note: we can't use frame_count by itself because it's an approximation and could lead to errors
-    for frame_number in range(1, frame_count - 6, nth_frame):
+            # if not dealing with an image
+            if os.path.splitext(video_file_name)[1] not in IMG_EXTENSIONS:
+                vid.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+                _, frame = vid.read()
 
-        # if not dealing with an image
-        if os.path.splitext(video_file_name)[1] not in IMG_EXTENSIONS:
-            vid.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
-            _, frame = vid.read()
-
-        # feed our frame (or image) in to detect_common_objects
-        bbox, labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=confidence, gpu_enabled=gpu)
-
-        if 'person' in labels:
-            person_detection_counter += 1
-            is_human_found = True
-
-            # create image with bboxes showing people and then save
-            marked_frame = cvlib.object_detection.draw_bbox(frame, bbox, labels, conf, write_conf=True)
-            save_file_name = os.path.basename(os.path.splitext(video_file_name)[0]) + '-' + str(person_detection_counter) + '.jpeg'
-            cv2.imwrite(save_directory + '/' + save_file_name , marked_frame)
-
-            if continuous is False:
+            # feed our frame (or image) in to detect_common_objects
+            try:
+                bbox, labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=confidence, gpu_enabled=gpu)
+            except:
+                analyze_error = True
                 break
 
-    return is_human_found
+            if 'person' in labels:
+                person_detection_counter += 1
+                is_human_found = True
+
+                # create image with bboxes showing people and then save
+                marked_frame = cvlib.object_detection.draw_bbox(frame, bbox, labels, conf, write_conf=True)
+                save_file_name = os.path.basename(os.path.splitext(video_file_name)[0]) + '-' + str(person_detection_counter) + '.jpeg'
+                cv2.imwrite(save_directory + '/' + save_file_name , marked_frame)
+
+                if continuous is False:
+                    break
+
+    return is_human_found, analyze_error
 
 
 # takes a directory and returns all files and directories within
@@ -100,22 +120,14 @@ def getListOfFiles(dir_name):
     return all_files
 
 
-def twilioAlertSender(human_detected, TWILIO_TOKEN, TWILIO_SID, TWILIO_FROM, TWILIO_TO):
+def twilioAlertSender(TWILIO_TOKEN, TWILIO_SID, TWILIO_FROM, TWILIO_TO):
     # if people are detected and --twilio flag has been set, send a text
-    if human_detected:
-        client = Client(TWILIO_SID, TWILIO_TOKEN)
-        client.messages.create(body=f"Human Detected. Check log files", from_=TWILIO_FROM, to=TWILIO_TO)
-
-    elif human_detected is False and VALID_FILE is True:
-        client = Client(TWILIO_SID, TWILIO_TOKEN)
-        client.messages.create(body=f"All Clear.", from_=TWILIO_FROM, to=TWILIO_TO)
-
-    else:
-        client = Client(TWILIO_SID, TWILIO_TOKEN)
-        client.messages.create(body=f"No valid files examined.", from_=TWILIO_FROM, to=TWILIO_TO)
+    client = Client(TWILIO_SID, TWILIO_TOKEN)
+    client.messages.create(body=f"Human Detected: {HUMAN_DETECTED_ALERT} \n Valid Files Examined: {VALID_FILE_ALERT} \n Errors Detected: {ERROR_ALERT}", from_=TWILIO_FROM, to=TWILIO_TO)
 
 
-def emailAlertSender(human_detected, save_directory, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL):
+
+def emailAlertSender(save_directory, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL):
 
     port = 465  # For SSL
     smtp_server = "smtp.gmail.com"
@@ -127,10 +139,10 @@ def emailAlertSender(human_detected, save_directory, SENDER_EMAIL, SENDER_PASS, 
 
     msg['From'] = SENDER_EMAIL
     msg['To'] = RECEIVER_EMAIL
-    if human_detected is True:
+    if HUMAN_DETECTED_ALERT is True:
         msg['Subject'] = 'Intruder Alert'
 
-    elif human_detected is False and VALID_FILE is True:
+    elif HUMAN_DETECTED_ALERT is False and VALID_FILE_ALERT is True:
         msg['Subject'] = 'All Clear'
 
     else:
@@ -225,7 +237,6 @@ if __name__ == "__main__":
     print(f"Continous examination is set to {args['continuous']}")
     print('\n\n')
     print(datetime.now().strftime('%m%d%Y-%H:%M:%S'))
-    human_detected = False
 
     # open a log file and loop over all our video files
     with open(time_stamp + '/' + time_stamp +'.txt', 'w') as log_file:
@@ -241,18 +252,26 @@ if __name__ == "__main__":
             print(f'Examining {video_file}: {working_on_counter} of {len(video_directory_list)}: {int((working_on_counter/len(video_directory_list)*100))}%    ', end='')
 
             # check for people
-            if humanChecker(str(video_file), time_stamp, yolo=yolo_string, nth_frame=every_nth_frame, confidence=confidence_percent, continuous=args['continuous'], gpu=gpu_flag):
-                human_detected = True
+            human_detected, error_detected =  humanChecker(str(video_file), time_stamp, yolo=yolo_string, nth_frame=every_nth_frame, confidence=confidence_percent, continuous=args['continuous'], gpu=gpu_flag)
+                
+            if human_detected:    
+                HUMAN_DETECTED_ALERT = True
                 print(f'Human detected in {video_file}')
                 log_file.write(f'{video_file} \n' )
+            
+            if error_detected:
+                ERROR_ALERT = True
+                print(f'\nError in analyzing {video_file}')
+                log_file.write(f'Error in analyzing {video_file} \n' )
+
             working_on_counter += 1
 
-    if VALID_FILE is False:
+    if VALID_FILE_ALERT is False:
         print('No valid image or video files were examined')
 
     if args['twilio'] is True:
-        twilioAlertSender(human_detected, TWILIO_TOKEN, TWILIO_SID, TWILIO_FROM, TWILIO_TO)
+        twilioAlertSender(TWILIO_TOKEN, TWILIO_SID, TWILIO_FROM, TWILIO_TO)
 
     if args['email'] is True:
-        emailAlertSender(human_detected, time_stamp, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL)
+        emailAlertSender(time_stamp, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL)
     print(datetime.now().strftime('%m%d%Y-%H:%M:%S'))
