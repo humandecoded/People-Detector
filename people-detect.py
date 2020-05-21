@@ -57,7 +57,7 @@ def humanChecker(video_file_name, save_directory, yolo='yolov3', continuous=Fals
     # look at every nth_frame of our video file, run frame through detect_common_objects
     # Increase 'nth_frame' to examine fewer frames and increase speed. Might reduce accuracy though.
     # Note: we can't use frame_count by itself because it's an approximation and could lead to errors
-    for frame_number in range(1, frame_count - 3, nth_frame):
+    for frame_number in range(1, frame_count - 6, nth_frame):
 
         # if not dealing with an image
         if os.path.splitext(video_file_name)[1] not in IMG_EXTENSIONS:
