@@ -5,8 +5,11 @@ Check out a demo at: https://youtu.be/q_o1P9zzW1o
 ## Update: 
 This script can now take advantage of a CUDA capable gpu. I've put together a how to in a separate blog post: https://humandecoded.io/tensorflow-2-1-and-opencv-4-2-running-on-gpu/
 
+The blog post above was tested on an Ubuntu 18.04 system. You can follow the same instructions for an Ubuntu 20.04 system but will need to have an older version of `gcc` to switch to. See this Linux Config post for an explanation of that:
+https://linuxconfig.org/how-to-switch-between-multiple-gcc-and-g-compiler-versions-on-ubuntu-20-04-lts-focal-fossa
+
 ## Why I made this script?
-I wrote this script after having my backyard shed broken in to as well as the car in my driveway. After each break-in I placed a motion activated camera in the respective area. My goal here is not to catch people "in the act" but instead be alerted that people have been creeping around my backyard or checking the cars in my driveway for unlocked doors. There is way too much natural motion in these areas for me to review footage every time the camera detects motion. This script will automate the "busy work" and let me know what clips I might want to look in to.
+I wrote this script after having my backyard shed broken in to as well as the car in my driveway. After each break in I placed a motion activated camera in the respective area. My goal here is not to catch people "in the act" but instead be alerted that people have been creeping around my backyard or checking the cars in my driveway for unlocked doors. There is way too much natural motion in these areas for me to review footage every time the camera detects motion. This script will automate the "busy work" and let me know what clips I might want to look in to.
  
 My hope hear is to catch a pattern of behavior. For example, "Every Sunday night someone tries the car doors in my driveway"
 
@@ -21,14 +24,16 @@ I have an old Imac I use as a dvr for my camera system. Every morning I have a s
 This script relies on the work done on cvlib: https://github.com/arunponnusamy/cvlib
 cvlib offers us some high level methods to detect common objects within photos or videos without any experience with machine learning.
 
-## Tensorflow 2 does not yet support Python 3.8. Tensorflow 2.2 will add 3.8 support. You will want to create a virtual environment for python 3.7 before getting started. If you try to ` pip install tensorflow` from Python 3.8 it will not find tensorflow
 
 ## Requirements 
-* First, activate your Python 3.7 virtual env
-* `pip install tensorflow`
-* `pip install cvlib`
-* `pip install opencv-python`
-* `pip install twilio`
+* First, activate your Python 3.7 virtual env.  Then:
+```
+pip install --upgrade pip
+pip install tensorflow
+pip install cvlib
+pip install opencv-python
+pip install twilio
+```
 
 When you first run this script it will reach out and download the pre-trained YOLO model as well.
 
