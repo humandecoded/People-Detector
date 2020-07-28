@@ -82,7 +82,7 @@ def humanChecker(video_file_name, save_directory, yolo='yolov3', continuous=Fals
 
             # feed our frame (or image) in to detect_common_objects
             try:
-                bbox, labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=confidence, gpu_enabled=gpu)
+                bbox, labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=confidence, enable_gpu=gpu)
             except:
                 analyze_error = True
                 break
