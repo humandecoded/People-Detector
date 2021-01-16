@@ -25,7 +25,7 @@ HUMAN_DETECTED_ALERT = False
 
 # function takes a file name(full path), checks that file for human shaped objects
 # saves the frames with people detected into directory named 'save_directory'
-def humanChecker(video_file_name, save_directory, yolo='yolov3', continuous=False, nth_frame=10, confidence=.65, gpu=False):
+def humanChecker(video_file_name, save_directory, yolo='yolov4', continuous=False, nth_frame=10, confidence=.65, gpu=False):
 
     # for modifying our global variarble VALID_FILE
     global VALID_FILE_ALERT
@@ -82,8 +82,10 @@ def humanChecker(video_file_name, save_directory, yolo='yolov3', continuous=Fals
 
             # feed our frame (or image) in to detect_common_objects
             try:
+                
                 bbox, labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=confidence, enable_gpu=gpu)
-            except:
+            except Exception as e:
+                print(e)
                 analyze_error = True
                 break
 
@@ -170,7 +172,7 @@ if __name__ == "__main__":
     parser.add_argument('-f', default='', help='Used to select an individual file')
     parser.add_argument('--twilio', action='store_true', help='Flag to use Twilio text notification')
     parser.add_argument('--email', action='store_true', help='Flag to use email notification')
-    parser.add_argument('--tiny_yolo', action='store_true', help='Flag to indicate using YoloV3-tiny model instead of the full one. Will be faster but less accurate.')
+    parser.add_argument('--tiny_yolo', action='store_true', help='Flag to indicate using YoloV4-tiny model instead of the full one. Will be faster but less accurate.')
     parser.add_argument('--continuous', action='store_true', help='This option will go through entire video file and save all frames with people. Default behavior is to stop after first person sighting.')
     parser.add_argument('--confidence', type=int, choices=range(1,100), default=65, help='Input a value between 1-99. This represents the percent confidence you require for a hit. Default is 65')
     parser.add_argument('--frames', type=int, default=10, help='Only examine every nth frame. Default is 10')
@@ -180,9 +182,9 @@ if __name__ == "__main__":
 
     # decide which model we'll use, default is 'yolov3', more accurate but takes longer
     if args['tiny_yolo']:
-        yolo_string = 'yolov3-tiny'
+        yolo_string = 'yolov4-tiny'
     else:
-        yolo_string = 'yolov3'
+        yolo_string = 'yolov4'
 
         
     #check our inputs, can only use either -f or -d but must use one
