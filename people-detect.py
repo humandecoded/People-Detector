@@ -171,7 +171,7 @@ def humanCheckerLive(frame, yolo='yolov4', continuous=True, confidence=.65, gpu=
     # tracking if we've found a human or not
     is_human_found = False
     analyze_error = False
-    is_valid = False
+    
 
     
 
@@ -191,7 +191,7 @@ def humanCheckerLive(frame, yolo='yolov4', continuous=True, confidence=.65, gpu=
         # create image with bboxes showing people and then save
         marked_frame = cvlib.object_detection.draw_bbox(frame, bbox, labels, conf, write_conf=True)
        # save_file_name = os.path.basename(os.path.splitext(video_file_name)[0]) + '-' + str(person_detection_counter) + '.jpeg'
-        save_file_name = datetime.now().strftime("%H:%M:%S")
+        save_file_name = datetime.now().strftime("%H:%M:%S:%f")
 
         cv2.imwrite(save_file_name + ".jpg" , marked_frame)
 
@@ -212,6 +212,8 @@ if __name__ == "__main__":
     parser.add_argument('--frames', type=int, default=10, help='Only examine every nth frame. Default is 10')
     parser.add_argument('--gpu', action='store_true', help='Attempt to run on GPU instead of CPU. Requires Open CV compiled with CUDA enables and Nvidia drivers set up correctly.')
     parser.add_argument('--live', action='store_true', help='Choose a live stream instead of files')
+    parser.add_argument('--usb_addr', default=0, type=int, help='Reference number of your USB cam. Zero indexed')
+    parser.add_argument('--web_addr', default='', help="Web adderss of video source")
     args = vars(parser.parse_args())
 
     # decide which model we'll use, default is 'yolov3', more accurate but takes longer
@@ -219,10 +221,13 @@ if __name__ == "__main__":
         yolo_string = 'yolov4-tiny'
     else:
         yolo_string = 'yolov4'
-
+    
+    # sorting out the live source options
     live_flag = False
     if args['live']:
         live_flag = True
+        
+
 
     #check our inputs, can only use either -f or -d but must use one
     if args['f'] == '' and args['directory'] == '' and not live_flag:
@@ -319,11 +324,17 @@ if __name__ == "__main__":
         if args['email'] is True:
             emailAlertSender(time_stamp, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL)
         print(datetime.now().strftime('%m%d%Y-%H:%M:%S'))
-
+    
+    # examining a live feed and not a video file
     else:
-        print("this would be a live section")
+        print("analyzing video stream")
 
-        cap = cv2.VideoCapture(0) 
+        if args['web_addr'] == '':
+            live_source = args['usb_addr']
+        else:
+            live_source = args['web_addr']
+        
+        cap = cv2.VideoCapture(live_source) 
         # cap.open("rtsp://USER:PASS@IP:PORT/Streaming/Channels/2")
 
         while(True):
