@@ -163,6 +163,40 @@ def emailAlertSender(save_directory, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL):
         server.login(SENDER_EMAIL, SENDER_PASS)
         server.send_message(msg)
 
+def humanCheckerLive(frame, yolo='yolov4', continuous=True, confidence=.65, gpu=False):
+
+    # for modifying our global variarble VALID_FILE
+    global VALID_FILE_ALERT
+
+    # tracking if we've found a human or not
+    is_human_found = False
+    analyze_error = False
+    is_valid = False
+
+    
+
+    # feed our frame (or image) in to detect_common_objects
+    try:
+        
+        bbox, labels, conf = cvlib.detect_common_objects(frame, model=yolo, confidence=confidence, enable_gpu=gpu)
+    except Exception as e:
+        print(e)
+        analyze_error = True
+        
+
+    if 'person' in labels:
+
+        is_human_found = True
+
+        # create image with bboxes showing people and then save
+        marked_frame = cvlib.object_detection.draw_bbox(frame, bbox, labels, conf, write_conf=True)
+       # save_file_name = os.path.basename(os.path.splitext(video_file_name)[0]) + '-' + str(person_detection_counter) + '.jpeg'
+        save_file_name = datetime.now().strftime("%H:%M:%S")
+
+        cv2.imwrite(save_file_name + ".jpg" , marked_frame)
+
+
+    return is_human_found, analyze_error
 
 #############################################################################################################################
 if __name__ == "__main__":
@@ -177,7 +211,7 @@ if __name__ == "__main__":
     parser.add_argument('--confidence', type=int, choices=range(1,100), default=65, help='Input a value between 1-99. This represents the percent confidence you require for a hit. Default is 65')
     parser.add_argument('--frames', type=int, default=10, help='Only examine every nth frame. Default is 10')
     parser.add_argument('--gpu', action='store_true', help='Attempt to run on GPU instead of CPU. Requires Open CV compiled with CUDA enables and Nvidia drivers set up correctly.')
-
+    parser.add_argument('--live', action='store_true', help='Choose a live stream instead of files')
     args = vars(parser.parse_args())
 
     # decide which model we'll use, default is 'yolov3', more accurate but takes longer
@@ -186,12 +220,15 @@ if __name__ == "__main__":
     else:
         yolo_string = 'yolov4'
 
-        
+    live_flag = False
+    if args['live']:
+        live_flag = True
+
     #check our inputs, can only use either -f or -d but must use one
-    if args['f'] == '' and args['directory'] == '':
+    if args['f'] == '' and args['directory'] == '' and not live_flag:
         print('You must select either a directory with -d <directory> or a file with -f <file name>')
         sys.exit(1)
-    if args['f'] != '' and args['directory'] != '' :
+    if args['f'] != '' and args['directory'] != '' and not live_flag:
         print('Must select either -f or -d but can''t do both')
         sys.exit(1)
 
@@ -227,54 +264,76 @@ if __name__ == "__main__":
     if args['gpu']:
         gpu_flag = True
 
-    # create a directory to hold snapshots and log file
-    time_stamp = datetime.now().strftime('%m%d%Y-%H:%M:%S')
-    os.mkdir(time_stamp)
+    
 
-    print('Beginning Detection')
-    print(f'Directory {time_stamp} has been created')
-    print(f"Email notifications set to {args['email']}. Text notification set to {args['twilio']}.")
-    print(f"Confidence threshold set to {args['confidence']}%")
-    print(f'Examining every {every_nth_frame} frames.')
-    print(f"Continous examination is set to {args['continuous']}")
-    print(f"GPU is set to {args['gpu']}")
-    print('\n\n')
-    print(datetime.now().strftime('%m%d%Y-%H:%M:%S'))
 
-    # open a log file and loop over all our video files
-    with open(time_stamp + '/' + time_stamp +'.txt', 'w') as log_file:
-        if args['f'] == '':
-            video_directory_list = getListOfFiles(args['directory'] + '/')
-        else:
-            video_directory_list = [args['f']]
+    if not live_flag:
+        # create a directory to hold snapshots and log file
+        time_stamp = datetime.now().strftime('%m%d%Y-%H:%M:%S')
+        os.mkdir(time_stamp)
 
-        # what video we are on
-        working_on_counter = 1
+        print('Beginning Detection')
+        print(f'Directory {time_stamp} has been created')
+        print(f"Email notifications set to {args['email']}. Text notification set to {args['twilio']}.")
+        print(f"Confidence threshold set to {args['confidence']}%")
+        print(f'Examining every {every_nth_frame} frames.')
+        print(f"Continous examination is set to {args['continuous']}")
+        print(f"GPU is set to {args['gpu']}")
+        print('\n\n')
+        print(datetime.now().strftime('%m%d%Y-%H:%M:%S'))
 
-        for video_file in video_directory_list:
-            print(f'Examining {video_file}: {working_on_counter} of {len(video_directory_list)}: {int((working_on_counter/len(video_directory_list)*100))}%    ', end='')
+        # open a log file and loop over all our video files
+        with open(time_stamp + '/' + time_stamp +'.txt', 'w') as log_file:
+            if args['f'] == '':
+                video_directory_list = getListOfFiles(args['directory'] + '/')
+            else:
+                video_directory_list = [args['f']]
 
-            # check for people
-            human_detected, error_detected =  humanChecker(str(video_file), time_stamp, yolo=yolo_string, nth_frame=every_nth_frame, confidence=confidence_percent, continuous=args['continuous'], gpu=gpu_flag)
+            # what video we are on
+            working_on_counter = 1
+
+            for video_file in video_directory_list:
+                print(f'Examining {video_file}: {working_on_counter} of {len(video_directory_list)}: {int((working_on_counter/len(video_directory_list)*100))}%    ', end='')
+
+                # check for people
+                human_detected, error_detected =  humanChecker(str(video_file), time_stamp, yolo=yolo_string, nth_frame=every_nth_frame, confidence=confidence_percent, continuous=args['continuous'], gpu=gpu_flag)
+                    
+                if human_detected:    
+                    HUMAN_DETECTED_ALERT = True
+                    print(f'Human detected in {video_file}')
+                    log_file.write(f'{video_file} \n' )
                 
-            if human_detected:    
-                HUMAN_DETECTED_ALERT = True
-                print(f'Human detected in {video_file}')
-                log_file.write(f'{video_file} \n' )
-            
-            if error_detected:
-                ERROR_ALERT = True
-                print(f'\nError in analyzing {video_file}')
-                log_file.write(f'Error in analyzing {video_file} \n' )
+                if error_detected:
+                    ERROR_ALERT = True
+                    print(f'\nError in analyzing {video_file}')
+                    log_file.write(f'Error in analyzing {video_file} \n' )
 
-            working_on_counter += 1
+                working_on_counter += 1
 
-    if VALID_FILE_ALERT is False:
-        print('No valid image or video files were examined')
+        if VALID_FILE_ALERT is False:
+            print('No valid image or video files were examined')
 
-    if args['twilio'] is True:
-        twilioAlertSender(TWILIO_TOKEN, TWILIO_SID, TWILIO_FROM, TWILIO_TO)
+        if args['twilio'] is True:
+            twilioAlertSender(TWILIO_TOKEN, TWILIO_SID, TWILIO_FROM, TWILIO_TO)
 
-    if args['email'] is True:
-        emailAlertSender(time_stamp, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL)
-    print(datetime.now().strftime('%m%d%Y-%H:%M:%S'))
+        if args['email'] is True:
+            emailAlertSender(time_stamp, SENDER_EMAIL, SENDER_PASS, RECEIVER_EMAIL)
+        print(datetime.now().strftime('%m%d%Y-%H:%M:%S'))
+
+    else:
+        print("this would be a live section")
+
+        cap = cv2.VideoCapture(0) 
+        # cap.open("rtsp://USER:PASS@IP:PORT/Streaming/Channels/2")
+
+        while(True):
+            # Capture frame-by-frame
+            ret, frame = cap.read()
+
+            # Our operations on the frame come here
+            #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            # Display the resulting frame
+            human_detected, error_detected = humanCheckerLive(frame, yolo='yolov4', continuous=True, confidence=confidence_percent, gpu=gpu_flag)
+            if human_detected:
+                print("found human")
