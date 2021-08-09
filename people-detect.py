@@ -9,7 +9,7 @@ from twilio.rest import Client  # used for texting if you'd like, flag is option
 import smtplib, ssl # for sending email alerts
 from email.message import EmailMessage
 import imghdr
-
+import time
 
 # these will need to be fleshed out to not miss any formats
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.tiff', '.gif']
@@ -214,7 +214,9 @@ if __name__ == "__main__":
     parser.add_argument('--live', action='store_true', help='Choose a live stream instead of files')
     parser.add_argument('--usb_addr', default=0, type=int, help='Reference number of your USB cam. Zero indexed')
     parser.add_argument('--web_addr', default='', help="Web adderss of video source")
+    parser.add_argument('--live_delay_seconds', default=.5, type=float, help='Only check the feed every nth seconds')
     args = vars(parser.parse_args())
+
 
     # decide which model we'll use, default is 'yolov3', more accurate but takes longer
     if args['tiny_yolo']:
@@ -341,10 +343,8 @@ if __name__ == "__main__":
             # Capture frame-by-frame
             ret, frame = cap.read()
 
-            # Our operations on the frame come here
-            #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
             # Display the resulting frame
             human_detected, error_detected = humanCheckerLive(frame, yolo='yolov4', continuous=True, confidence=confidence_percent, gpu=gpu_flag)
             if human_detected:
                 print("found human")
+            time.sleep(args['live_delay_seconds'])
